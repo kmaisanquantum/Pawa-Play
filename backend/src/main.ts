@@ -6,7 +6,7 @@ import { RegulatoryConfigService } from './config/regulatory-config.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api/v1', { exclude: ['health', '/health'] });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const regulatoryConfig = app.get(RegulatoryConfigService);
