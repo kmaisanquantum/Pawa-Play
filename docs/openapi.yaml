@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: PawaPlay API
+  version: 0.1.0-phase0
+  description: >
+    Phase 0 vertical-slice API (DEMO regulatory mode). Register -> Login -> Demo KYC ->
+    Demo Wallet -> Sports -> Bet Slip -> Place Demo Bet -> Settlement -> Demo Withdrawal.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        statusCode: { type: integer }
+        error: { type: string }
+        message: { type: string }
+        correlationId: { type: string }
+    Money:
+      type: string
+      description: Decimal string, e.g. "20.00"
+    WalletBalance:
+      type: object
+      properties:
+        currencyCode: { type: string, example: PGK }
+        balance: { $ref: '#/components/schemas/Money' }
+        regulatoryMode: { type: string, enum: [DEMO, TEST, PRODUCTION] }
+    BetPlacementRequest:
+      type: object
+      required: [selections, stake]
+      properties:
+        selections:
+          type: array
+          items:
+            type: object
+            properties:
+              selectionId: { type: string, format: uuid }
+        stake: { $ref: '#/components/schemas/Money' }
+    BetPlacementResponse:
+      type: object
+      properties:
+        betId: { type: string, format: uuid }
+        status: { type: string }
+        potentialReturn: { $ref: '#/components/schemas/Money' }
+paths:
+  /auth/register:
+    post:
+      summary: Register with mobile number, triggers OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mobileNumber]
+              properties:
+                mobileNumber: { type: string, example: "+675XXXXXXX" }
+      responses:
+        '202': { description: OTP sent }
+        '400': { description: Invalid input, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /auth/verify-otp:
+    post:
+      summary: Confirm OTP and set PIN
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mobileNumber, otp, pin]
+              properties:
+                mobileNumber: { type: string }
+                otp: { type: string }
+                pin: { type: string }
+      responses:
+        '201': { description: Account created }
+  /auth/login:
+    post:
+      summary: Login with mobile + PIN
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mobileNumber, pin]
+              properties:
+                mobileNumber: { type: string }
+                pin: { type: string }
+      responses:
+        '200':
+          description: JWT pair
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: { type: string }
+                  refreshToken: { type: string }
+  /wallet/balance:
+    get:
+      summary: Get current wallet balance (server-derived from ledger)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WalletBalance' }
+  /wallet/deposit:
+    post:
+      summary: Simulated deposit (DEMO mode only in Phase 0)
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount: { $ref: '#/components/schemas/Money' }
+      responses:
+        '201': { description: Deposit recorded }
+  /sports:
+    get:
+      summary: List active sports with upcoming events
+      responses:
+        '200': { description: OK }
+  /bets:
+    post:
+      summary: Place a bet (server validates everything; DEMO uses simulated wallet)
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BetPlacementRequest' }
+      responses:
+        '201':
+          description: Bet placed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BetPlacementResponse' }
+        '422': { description: Validation failed (limits/balance/odds/status), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    get:
+      summary: List current user's bets
+      responses:
+        '200': { description: OK }
