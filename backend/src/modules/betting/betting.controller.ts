@@ -14,8 +14,8 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 
 class PlaceBetDto {
-  selections: { selectionId: string }[];
-  stake: string;
+  selections!: { selectionId: string }[];
+  stake!: string;
 }
 
 @ApiTags('bets')

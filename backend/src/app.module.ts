@@ -6,6 +6,7 @@ import { Pool } from 'pg';
 import { RegulatoryConfigService } from './config/regulatory-config.service';
 import { WalletService } from './modules/wallet/wallet.service';
 import { BettingService } from './modules/betting/betting.service';
+import { HealthController } from './common/health.controller';
 import { BettingController } from './modules/betting/betting.controller';
 import { WalletController } from './modules/wallet/wallet.controller';
 
@@ -18,7 +19,7 @@ import { WalletController } from './modules/wallet/wallet.controller';
       signOptions: { expiresIn: '15m' },
     }),
   ],
-  controllers: [BettingController, WalletController],
+  controllers: [HealthController, BettingController, WalletController],
   providers: [
     RegulatoryConfigService,
     WalletService,
@@ -26,7 +27,10 @@ import { WalletController } from './modules/wallet/wallet.controller';
     {
       provide: Pool,
       useFactory: () =>
-        new Pool({ connectionString: process.env.DATABASE_URL }),
+        new Pool({
+          connectionString: process.env.DATABASE_URL,
+          ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
+        }),
     },
   ],
 })
