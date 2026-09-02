@@ -12,7 +12,7 @@ The application is built as a single container serving both the React SPA fronte
 - **REST API:** Available at `/api/v1`
 - **Health Check Path:** `/health` (returns `{ "status": "ok" }`)
 - **Exposed Port:** `3000`
-- **Build Context:** Repository root `.` using `backend/Dockerfile` or `docker-compose.prod.yml`
+- **Build Context:** `./backend` using `backend/Dockerfile` (or `docker-compose.prod.yml`)
 
 > **Mobile Apps:** The React app in `frontend/` can also be built into iOS/Android native packages via Capacitor. See `docs/MOBILE.md` for mobile wrapper setup instructions.
 
@@ -42,7 +42,7 @@ psql "$DATABASE_URL" -f database/seed/demo_seed.sql
 
 ## 3. Environment Variable Configuration
 
-In Coolify, configure the following environment variables for the application service:
+In Coolify UI, configure the following environment variables for the application service:
 
 | Variable | Description | Example / Default |
 |---|---|---|
@@ -58,10 +58,11 @@ In Coolify, configure the following environment variables for the application se
 ## 4. Deploying via Coolify
 
 1. **Create Application in Coolify:**
-   - Connect repository and select Dockerfile deployment using `backend/Dockerfile` (or Docker Compose using `docker-compose.prod.yml`). Ensure the build context is set to the repository root.
+   - Select Dockerfile deployment with build context `./backend` and Dockerfile path `Dockerfile` (or Docker Compose using `docker-compose.prod.yml`).
 2. **Configure Environment:**
-   - Add all environment variables listed above. Ensure `DATABASE_URL` references the managed Postgres connection string.
-3. **Configure Health Check:**
-   - Set health check target path to `/health` on port `3000`.
+   - Add all environment variables listed above in the Coolify UI. Ensure `DATABASE_URL` references the managed Postgres connection string.
+3. **Configure Health Check & Ports:**
+   - Set exposed port to `3000`.
+   - Set health check target path to `/health`.
 4. **Deploy:**
-   - Trigger deployment. Coolify will run the multi-stage Docker build (`frontend` build -> `backend` build -> single runner image) and launch the application serving the Web UI at `/`, REST API at `/api/v1`, and health check at `/health`.
+   - Trigger deployment. Coolify will build the Docker container via `npm ci` and `npm run build` and launch `dist/main.js` serving the Web UI at `/`, REST API at `/api/v1`, and health check at `/health`.
