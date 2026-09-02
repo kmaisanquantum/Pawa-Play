@@ -1,24 +1,26 @@
-# Deploying PawaPlay Backend on Coolify
+# Deploying PawaPlay Fullstack Application on Coolify
 
-This guide explains how to deploy the PawaPlay NestJS backend API (`backend/`) on Coolify using a managed PostgreSQL database.
-
-> **Note:** Only the NestJS backend API is currently deployable from this repository. Mobile client applications (`mobile-customer/`, `mobile-agent/`) do not exist yet.
+This guide explains how to deploy the unified PawaPlay fullstack application (NestJS API + React Web UI) on Coolify using a single Docker container and a managed PostgreSQL database.
 
 ---
 
 ## 1. Prerequisites & Overview
 
-Coolify provides a managed PostgreSQL instance and handles container building and orchestration for the backend API.
+The application is built as a single container serving both the React SPA frontend and NestJS REST API endpoints:
 
-- **Build Context:** `./backend` (uses `backend/Dockerfile`) or `docker-compose.prod.yml`.
-- **Exposed Port:** `3000`
+- **Web UI:** Available at `/` (serves React SPA built from `frontend/`)
+- **REST API:** Available at `/api/v1`
 - **Health Check Path:** `/health` (returns `{ "status": "ok" }`)
+- **Exposed Port:** `3000`
+- **Build Context:** Repository root `.` using `backend/Dockerfile` or `docker-compose.prod.yml`
+
+> **Mobile Apps:** The React app in `frontend/` can also be built into iOS/Android native packages via Capacitor. See `docs/MOBILE.md` for mobile wrapper setup instructions.
 
 ---
 
 ## 2. Managed PostgreSQL Setup & Database Migrations
 
-Because Coolify-managed PostgreSQL instances do not automatically execute initialisation scripts (such as `/docker-entrypoint-initdb.d`), schema migrations must be applied manually prior to initial service boot.
+Because Coolify-managed PostgreSQL instances do not automatically execute initialisation scripts in `/docker-entrypoint-initdb.d`, schema migrations must be applied manually prior to initial service boot.
 
 ### Apply Schema Migration
 
@@ -40,7 +42,7 @@ psql "$DATABASE_URL" -f database/seed/demo_seed.sql
 
 ## 3. Environment Variable Configuration
 
-In Coolify, configure the following environment variables for the backend service:
+In Coolify, configure the following environment variables for the application service:
 
 | Variable | Description | Example / Default |
 |---|---|---|
@@ -56,10 +58,10 @@ In Coolify, configure the following environment variables for the backend servic
 ## 4. Deploying via Coolify
 
 1. **Create Application in Coolify:**
-   - Connect repository and select Dockerfile deployment using `backend/Dockerfile` or Docker Compose deployment using `docker-compose.prod.yml`.
+   - Connect repository and select Dockerfile deployment using `backend/Dockerfile` (or Docker Compose using `docker-compose.prod.yml`). Ensure the build context is set to the repository root.
 2. **Configure Environment:**
    - Add all environment variables listed above. Ensure `DATABASE_URL` references the managed Postgres connection string.
 3. **Configure Health Check:**
    - Set health check target path to `/health` on port `3000`.
 4. **Deploy:**
-   - Trigger deployment. Coolify will build the backend Docker container (`npm ci && npm run build`) and launch `dist/main.js`.
+   - Trigger deployment. Coolify will run the multi-stage Docker build (`frontend` build -> `backend` build -> single runner image) and launch the application serving the Web UI at `/`, REST API at `/api/v1`, and health check at `/health`.

@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { Pool } from 'pg';
 import { RegulatoryConfigService } from './config/regulatory-config.service';
 import { WalletService } from './modules/wallet/wallet.service';
@@ -17,6 +19,10 @@ import { WalletController } from './modules/wallet/wallet.controller';
     JwtModule.register({
       secret: process.env.JWT_SECRET ?? 'dev-only-secret-change-me',
       signOptions: { expiresIn: '15m' },
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'client'),
+      exclude: ['/api/(.*)', '/health'],
     }),
   ],
   controllers: [HealthController, BettingController, WalletController],

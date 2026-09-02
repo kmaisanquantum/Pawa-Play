@@ -1,8 +1,4 @@
 **/node_modules
 **/dist
 **/coverage
-**/client
 .git
-.env
-*.log
-.DS_Store
