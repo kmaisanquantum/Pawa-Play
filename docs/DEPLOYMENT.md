@@ -1,24 +1,34 @@
 # Deploying PawaPlay Fullstack Application on Coolify
 
-This guide explains how to deploy the unified PawaPlay fullstack application (NestJS API + React Web UI) on Coolify using a single Docker container and a managed PostgreSQL database.
+This guide explains how to deploy the unified PawaPlay fullstack application (NestJS API + React Web UI) on Coolify using **Nixpacks** (recommended) or Docker.
 
 ---
 
 ## 1. Prerequisites & Overview
 
-The application is built as a single container serving both the React SPA frontend and NestJS REST API endpoints:
+The application is built as a single unified service serving both the React SPA frontend and NestJS REST API endpoints:
 
-- **Web UI:** Available at `/` (serves React SPA built from `frontend/`)
+- **Web UI:** Available at `/` (serves React SPA built from `frontend/` placed in `backend/client/`)
 - **REST API:** Available at `/api/v1`
 - **Health Check Path:** `/health` (returns `{ "status": "ok" }`)
 - **Exposed Port:** `3000`
-- **Build Context:** `./backend` using `backend/Dockerfile` (or `docker-compose.prod.yml`)
+- **Primary Deployment Method:** Coolify **Nixpacks** Build Pack
 
 > **Mobile Apps:** The React app in `frontend/` can also be built into iOS/Android native packages via Capacitor. See `docs/MOBILE.md` for mobile wrapper setup instructions.
 
 ---
 
-## 2. Managed PostgreSQL Setup & Database Migrations
+## 2. Nixpacks Deployment on Coolify (Recommended)
+
+Coolify auto-detects the repository root `package.json` and `nixpacks.toml`:
+
+### Build & Start Lifecycle
+- **Install & Build (`npm run build`):** Installs dependencies and builds `frontend/`, builds `backend/`, and copies `frontend/dist/*` to `backend/client/`.
+- **Start (`npm run start`):** Executes `node backend/dist/main.js`.
+
+---
+
+## 3. Managed PostgreSQL Setup & Database Migrations
 
 Because Coolify-managed PostgreSQL instances do not automatically execute initialisation scripts in `/docker-entrypoint-initdb.d`, schema migrations must be applied manually prior to initial service boot.
 
@@ -40,7 +50,7 @@ psql "$DATABASE_URL" -f database/seed/demo_seed.sql
 
 ---
 
-## 3. Environment Variable Configuration
+## 4. Environment Variable Configuration
 
 In Coolify UI, configure the following environment variables for the application service:
 
@@ -55,14 +65,17 @@ In Coolify UI, configure the following environment variables for the application
 
 ---
 
-## 4. Deploying via Coolify
+## 5. Coolify Configuration Steps
 
-1. **Create Application in Coolify:**
-   - Select Dockerfile deployment with build context `./backend` and Dockerfile path `Dockerfile` (or Docker Compose using `docker-compose.prod.yml`).
-2. **Configure Environment:**
-   - Add all environment variables listed above in the Coolify UI. Ensure `DATABASE_URL` references the managed Postgres connection string.
-3. **Configure Health Check & Ports:**
-   - Set exposed port to `3000`.
-   - Set health check target path to `/health`.
-4. **Deploy:**
-   - Trigger deployment. Coolify will build the Docker container via `npm ci` and `npm run build` and launch `dist/main.js` serving the Web UI at `/`, REST API at `/api/v1`, and health check at `/health`.
+1. **Build Pack:** Select **Nixpacks**.
+2. **Ports & Health Check:**
+   - Set Port to `3000`.
+   - Set Health Check Path to `/health`.
+3. **Environment Variables:** Set required env vars from Section 4.
+4. **Deploy:** Click Deploy. Nixpacks will run `npm run build` followed by `npm run start`.
+
+---
+
+## 6. Docker Deployment Alternative
+
+Docker files (`Dockerfile`, `docker-compose.prod.yml`) remain available as an alternative deployment method if Docker engine deployment is selected instead of Nixpacks.

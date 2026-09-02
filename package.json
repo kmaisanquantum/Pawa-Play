@@ -1,0 +1,12 @@
+{
+  "name": "pawaplay",
+  "version": "0.1.0-phase0",
+  "private": true,
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "npm --prefix frontend install && npm --prefix frontend run build && npm --prefix backend install && npm --prefix backend run build && rm -rf backend/client && mkdir -p backend/client && cp -r frontend/dist/* backend/client/",
+    "start": "node backend/dist/main.js"
+  }
+}
